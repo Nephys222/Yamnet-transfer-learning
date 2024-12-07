@@ -8,7 +8,6 @@ import librosa
 import soundfile as sf
 import numpy as np
 import tensorflow as tf
-import tensorflow_io as tfio
 
 
 def test_dataset_size(recording_list):
@@ -19,7 +18,7 @@ def test_recordings(recording_list):
     for recording in tqdm.tqdm(recording_list):
         signal, rate = librosa.load('audio/' + recording, sr=None, mono=False)
 
-        assert rate == 44100
+        assert rate == 16000
         assert len(signal.shape) == 1  # mono
         assert len(signal) == 220500  # 5 seconds
         assert np.max(signal) > 0
@@ -91,7 +90,7 @@ def split_dataset(args):
             print(file)
             file_name = os.path.basename(os.path.normpath(file))
             file_base_name = os.path.splitext(file_name)[0]
-            data, sr = librosa.load(file, sr=44100)
+            data, sr = librosa.load(file, sr=16000)
             data = librosa.to_mono(data)
             frame_length = int(sr*args.length_audio)
             hop_length = int(sr*args.step)
@@ -102,15 +101,3 @@ def split_dataset(args):
                     output_category_path, file_base_name + str(idx) + '.wav')
                 sf.write(output_file_path, splited_data,
                          sr, format='WAV', subtype='PCM_16')
-
-
-def load_wav_16k_mono(filename):
-    """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
-    file_contents = tf.io.read_file(filename)
-    wav, sample_rate = tf.audio.decode_wav(
-          file_contents,
-          desired_channels=1)
-    wav = tf.squeeze(wav, axis=-1)
-    sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-    return wav
