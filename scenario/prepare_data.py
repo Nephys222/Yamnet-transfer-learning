@@ -63,13 +63,17 @@ def create_category_dataset(args):
             category = row[3]
             category_path = os.path.join(args.raw_dataset_path, category)
             os.makedirs(category_path, exist_ok=True)
-
-            normalized = load_wav_16k_mono(filename)
-            with open(filename, 'w') as file:
-                file.write(normalized)
-
             input_path = os.path.join(args.data_path, filename)
             output_path = os.path.join(category_path, filename)
+
+            norm_input = load_wav_16k_mono(input_path)
+            with open(input_path, 'w') as file:
+                file.write(norm_input)
+
+            norm_output = load_wav_16k_mono(output_path)
+            with open(output_path, 'w') as file:
+                file.write(norm_output)
+ 
             shutil.copy2(input_path, output_path)
 
 
