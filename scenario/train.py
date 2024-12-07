@@ -16,7 +16,7 @@ def show_confusion_matrix(args, confusion, test_labels):
     file_path = os.path.join(args.save_path, "confusion_matrix.png")
 
     confusion_normalized = confusion.astype("float") / confusion.sum(axis=1)
-    sns.set(rc={'figure.figsize': (50, 50)})
+    sns.set_theme(rc={'figure.figsize': (50, 50)})
     sns.heatmap(
         confusion_normalized, xticklabels=test_labels, yticklabels=test_labels,
         cmap='Blues', annot=True, fmt='.2f', square=True, cbar=False)
@@ -49,10 +49,14 @@ def train(args):
 
     model.evaluate(test_data)
     confusion_matrix = model.confusion_matrix(test_data)
-    show_confusion_matrix(args, confusion_matrix.numpy(),
-                          test_data.index_to_label)
 
-    print(f'Exporing the model to {args.save_path}')
+    try:
+        show_confusion_matrix(args, confusion_matrix.numpy(),
+                          test_data.index_to_label)
+    except:
+        print(f'Confusion {confusion_matrix.numpy()}')
+
+    print(f'Exporting the model to {args.save_path}')
     model.export(args.save_path, tflite_filename=args.tflite_file_name)
     model.export(args.save_path, export_format=[
                  mm.ExportFormat.SAVED_MODEL, mm.ExportFormat.LABEL])
