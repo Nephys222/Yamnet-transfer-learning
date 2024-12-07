@@ -8,6 +8,7 @@ import librosa
 import soundfile as sf
 import numpy as np
 import tensorflow as tf
+import tensorflow_io as tfio
 
 
 def test_dataset_size(recording_list):
@@ -62,6 +63,11 @@ def create_category_dataset(args):
             category = row[3]
             category_path = os.path.join(args.raw_dataset_path, category)
             os.makedirs(category_path, exist_ok=True)
+
+            normalized = load_wav_16k_mono(filename)
+            with open(filename, 'w') as file:
+                file.write(normalized)
+
             input_path = os.path.join(args.data_path, filename)
             output_path = os.path.join(category_path, filename)
             shutil.copy2(input_path, output_path)
@@ -92,3 +98,15 @@ def split_dataset(args):
                     output_category_path, file_base_name + str(idx) + '.wav')
                 sf.write(output_file_path, splited_data,
                          sr, format='WAV', subtype='PCM_16')
+
+
+def load_wav_16k_mono(filename):
+    """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
+    file_contents = tf.io.read_file(filename)
+    wav, sample_rate = tf.audio.decode_wav(
+          file_contents,
+          desired_channels=1)
+    wav = tf.squeeze(wav, axis=-1)
+    sample_rate = tf.cast(sample_rate, dtype=tf.int64)
+    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
+    return wav
